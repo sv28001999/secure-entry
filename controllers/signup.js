@@ -1,5 +1,6 @@
 const Account = require('../models/SignUp');
 const ValidateOtp = require('../models/VerifyOTP');
+const AccountInfo = require('../models/AccountInfo');
 const asyncWrapper = require('../middlewares/asyncWrapper');
 const { createCustomError } = require('../error/customApiError');
 const { generateOtpAndMail, otpValidity, compareOtp } = require('../methods/signUpMethod');
@@ -47,9 +48,39 @@ const verifyOtp = asyncWrapper(async (req, res, next) => {
     }
 });
 
+const createAccount = asyncWrapper(async (req, res, next) => {
 
+    const existingEmail = await AccountInfo.findOne({ email: req.body.email });
+    if (existingEmail) {
+        return next(createCustomError("Email already exists", 400));
+    }
+
+    const existingUsername = await AccountInfo.findOne({ username: req.body.username });
+    if (existingUsername) {
+        return next(createCustomError("Username already exists", 400));
+    }
+    
+    const existingMob = await AccountInfo.findOne({ mobileNumber: req.body.mobileNumber });
+    if (existingMob) {
+        return next(createCustomError("Mobile number already exists", 400));
+    }
+
+    const newUser = new AccountInfo({
+        email: req.body.email,
+        username: req.body.username,
+        accountRole: req.body.accountRole,
+        societyAddress: req.body.societyAddress,
+        mobileNumber: req.body.mobileNumber,
+        password: req.body.password
+    });
+
+    await newUser.save();
+
+    return res.status(200).json({ msg: 'Success' });
+})
 
 module.exports = {
     sendOtp,
-    verifyOtp
+    verifyOtp,
+    createAccount
 };

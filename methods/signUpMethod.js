@@ -58,14 +58,23 @@ const sendMail = async (otp, emailId) => {
 }
 
 async function generateUniqueCode(string1, string2, string3) {
+    // Check if any input string is undefined
+    if (typeof string1 !== 'string' || typeof string2 !== 'string' || typeof string3 !== 'string') {
+        throw new Error('All input strings must be defined');
+    }
+
     const timestamp = Date.now().toString(36); // Convert current timestamp to base36 string
     const random = Math.random().toString(36).substr(2, 5); // Generate a random base36 string
 
-    // Concatenate the three strings and append timestamp and random string
-    const uniqueCode = `${string1.slice(0, 2)}${string2.slice(0, 3)}${string3.slice(0, 3)}${timestamp}${random}`;
+    // Access characters directly using array-like indexing
+    const uniqueCode = (string1[0] || '') + (string1[1] || '') +
+        (string2[0] || '') + (string2[1] || '') + (string2[2] || '') +
+        (string3[0] || '') + (string3[1] || '') + (string3[2] || '') +
+        timestamp + random;
 
     return uniqueCode.toUpperCase(); // Convert the code to uppercase for consistency
 }
+
 
 async function encryptPass(password) {
     const hashedPassword = await hashPassword(password);

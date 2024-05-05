@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 
 const AccountInfo = new mongoose.Schema({
+    firstName: {
+        type: String,
+        required: [true, 'First Name is required']
+    },
+    lastName: {
+        type: String,
+        required: [true, 'Last Name is required']
+    },
     email: {
         type: String,
         required: [true, 'Email is required'],
@@ -32,8 +40,7 @@ const AccountInfo = new mongoose.Schema({
     },
     mobileNumber: {
         type: String,
-        required: [true, 'Mobile number is required'],
-        unique: [true, 'Account is already exist']
+        required: [true, 'Mobile number is required']
     },
     password: {
         type: String,
@@ -42,6 +49,10 @@ const AccountInfo = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: false
+    },
+    orgUniqueCode: {
+        type: String,
+        required: [true, "Society unique code is required"]
     }
 });
 

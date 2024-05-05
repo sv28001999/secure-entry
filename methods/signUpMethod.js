@@ -28,7 +28,7 @@ const hashPassword = async (password) => {
     }
 }
 
-const compareOtp = async (password, hash) => {
+const compareHash = async (password, hash) => {
     try {
         const result = await bcrypt.compare(password, hash);
         return result;
@@ -57,16 +57,23 @@ const sendMail = async (otp, emailId) => {
     return transporter.sendMail(mailOptions)
 }
 
-async function example() {
-    const password = 'password123';
+async function generateUniqueCode(string1, string2, string3) {
+    const timestamp = Date.now().toString(36); // Convert current timestamp to base36 string
+    const random = Math.random().toString(36).substring(2, 5); // Generate a random base36 string
 
-    // Hash the password
-    const hashedPassword = await hashPassword(password);
-    console.log('Hashed password:', hashedPassword);
+    // Concatenate the three strings and append timestamp and random string
+    const uniqueCode = string1.substring(0, 2) +
+        string2.substring(0, 3) +
+        string3.substring(0, 3) +
+        timestamp +
+        random;
 
-    // Verify the password against the hash
-    const isValid = await compareOtp(password, hashedPassword);
-    console.log('Password is valid:', isValid);
+    return uniqueCode.toUpperCase(); // Convert the code to uppercase for consistency
 }
 
-module.exports = { generateOtpAndMail, otpValidity, compareOtp }
+async function encryptPass(password) {
+    const hashedPassword = await hashPassword(password);
+    return hashedPassword;
+}
+
+module.exports = { generateOtpAndMail, otpValidity, compareHash, generateUniqueCode, encryptPass }

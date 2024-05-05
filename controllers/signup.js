@@ -1,86 +1,194 @@
-const Account = require('../models/SignUp');
+const Accounts = require('../models/Accounts');
 const ValidateOtp = require('../models/VerifyOTP');
+const SocietyInfo = require('../models/SocietyInfo');
 const AccountInfo = require('../models/AccountInfo');
 const asyncWrapper = require('../middlewares/asyncWrapper');
 const { createCustomError } = require('../error/customApiError');
-const { generateOtpAndMail, otpValidity, compareOtp } = require('../methods/signUpMethod');
+const { generateOtpAndMail, otpValidity, compareHash, generateUniqueCode, encryptPass } = require('../methods/signUpMethod');
+require('dotenv').config()
 
 const sendOtp = asyncWrapper(async (req, res, next) => {
-    const email = req.body.email;
-    const isAccount = await ValidateOtp.findOne({ email: email });
-    console.log(isAccount);
-    if (!email) {
-        return next(createCustomError("Email is required", 400));
-    }
-    else if (isAccount && +isAccount.otpRetryTime > Date.now()) {
-        return next(createCustomError("Please try after sometime", 400));
-    }
-    else {
-        const newOtp = await generateOtpAndMail(email);
-        const newValidTime = await otpValidity();
-        const createOtp = await ValidateOtp.findOneAndUpdate({ email: email },
-            { otpValidity: newValidTime.validityTime, otpRetryTime: newValidTime.retryTime, otp: newOtp, email: email },
-            { upsert: true, new: true });
-        return res.status(200).json({
-            isSuccess: true,
-            data: { msg: "OTP sent successfully", validTill: createOtp.validDate }
-        });
+    try {
+        const email = req.body.email;
+        if (!email) {
+            return next(createCustomError("Email is required", 400));
+        }
+
+        const isRegisteredCustomer = await AccountInfo.findOne({ email: email });
+        if (isRegisteredCustomer) {
+            // Check if there is an existing OTP record for the email
+            const existingOtpRecord = await ValidateOtp.findOne({ email: email });
+
+            // Check if there's an existing OTP record and if the retry time has not elapsed
+            if (existingOtpRecord && +existingOtpRecord.otpRetryTime > Date.now()) {
+                return next(createCustomError("Please try after sometime", 400));
+            }
+
+            // Generate new OTP
+            const newOtp = await generateOtpAndMail(email);
+
+            // Calculate new validity and retry time for OTP
+            const newValidTime = await otpValidity();
+
+            // Update or create OTP record
+            const createOtp = await ValidateOtp.findOneAndUpdate(
+                { email: email },
+                {
+                    otpValidity: newValidTime.validityTime,
+                    otpRetryTime: newValidTime.retryTime,
+                    otp: newOtp,
+                    email: email
+                },
+                { upsert: true, new: true }
+            );
+
+            return res.status(200).json({
+                isSuccess: true,
+                data: { msg: "OTP sent successfully", validTill: createOtp.validDate }
+            });
+        }
+        else {
+            return next(createCustomError("Email not registered", 400));
+        }
+
+    } catch (error) {
+        console.log(error);
+        return next(createCustomError("Internal server error", 500));
     }
 });
 
 const verifyOtp = asyncWrapper(async (req, res, next) => {
-    const { email, otp } = req.body;
-    const isAccount = await ValidateOtp.findOne({ email: email });
-    if (!email) {
-        return next(createCustomError("Email is required", 400));
-    }
-    else if (isAccount && +isAccount.otpValidity < Date.now()) {
-        return next(createCustomError("OTP is expired", 400));
-    }
-    else {
-        const isValidOtp = await compareOtp(otp, isAccount.otp);
-        if (isAccount.otpValidity > Date.now() && isValidOtp) {
-            return res.json({ isSuccess: true, msg: 'Otp verification successful' });
+    try {
+        const { email, otp } = req.body;
+
+        if (!email) {
+            return next(createCustomError("Email is required", 400));
         }
-        else {
+
+        // Check if there is an existing OTP record for the email
+        const existingOtpRecord = await ValidateOtp.findOne({ email: email });
+
+        // Check if the email exists in the OTP records
+        if (!existingOtpRecord) {
+            return res.json({ isSuccess: false, msg: 'No OTP found for this email' });
+        }
+
+        // Check if OTP has expired
+        if (+existingOtpRecord.otpValidity < Date.now()) {
+            return next(createCustomError("OTP is expired", 400));
+        }
+
+        // Verify OTP
+        const isValidOtp = await compareHash(otp, existingOtpRecord.otp);
+
+        if (isValidOtp) {
+            await AccountInfo.findOneAndUpdate(
+                { email: email },
+                {
+                    isActive: true
+                },
+                { upsert: true, new: true }
+            );
+            await Accounts.findOneAndUpdate(
+                { email: email },
+                {
+                    isActive: true
+                },
+                { upsert: true, new: true }
+            );
+            return res.json({ isSuccess: true, msg: 'OTP verification successful' });
+        } else {
             return res.json({ isSuccess: false, msg: 'Invalid OTP' });
         }
+    } catch (error) {
+        console.log(error);
+        return next(createCustomError("Internal server error", 500));
     }
 });
 
 const createAccount = asyncWrapper(async (req, res, next) => {
+    const { email, username, orgUniqueCode, accountRole, societyAddress, firstName, lastName, mobileNumber, password } = req.body;
 
-    const existingEmail = await AccountInfo.findOne({ email: req.body.email });
-    if (existingEmail) {
-        return next(createCustomError("Email already exists", 400));
+    // Check if email or username already exists
+    const existingAccount = await AccountInfo.findOne({ $or: [{ email }, { username }] });
+    if (existingAccount) {
+        return next(createCustomError("Email or username already exists", 400));
     }
 
-    const existingUsername = await AccountInfo.findOne({ username: req.body.username });
-    if (existingUsername) {
-        return next(createCustomError("Username already exists", 400));
-    }
-    
-    const existingMob = await AccountInfo.findOne({ mobileNumber: req.body.mobileNumber });
-    if (existingMob) {
-        return next(createCustomError("Mobile number already exists", 400));
+    // Check account role and organization unique code
+    if ((orgUniqueCode && accountRole === "SC") || (!orgUniqueCode && accountRole !== "SC")) {
+        return next(createCustomError("Invalid request", 400));
     }
 
+    // Check organization unique code if provided
+    if (orgUniqueCode && accountRole !== "SC") {
+        const isUniqueCodeExists = await SocietyInfo.findOne({ orgUniqueCode });
+        if (!isUniqueCodeExists) {
+            return next(createCustomError("Invalid unique code", 400));
+        }
+    }
+
+    // Generate organization unique code if not provided
+    const generatedOrgUniqueCode = orgUniqueCode || await generateUniqueCode(username, societyAddress.societyName, process.env.SE_ORG_UNIQUE_KEY);
+    const hashedPassword = await encryptPass(password);
+
+    // Create new user account
     const newUser = new AccountInfo({
-        email: req.body.email,
-        username: req.body.username,
-        accountRole: req.body.accountRole,
-        societyAddress: req.body.societyAddress,
-        mobileNumber: req.body.mobileNumber,
-        password: req.body.password
+        firstName,
+        lastName,
+        email,
+        username,
+        accountRole,
+        societyAddress,
+        mobileNumber,
+        password: hashedPassword,
+        orgUniqueCode: generatedOrgUniqueCode
     });
 
     await newUser.save();
 
-    return res.status(200).json({ msg: 'Success' });
-})
+    await new Accounts({
+        email: email,
+        username: username,
+        password: hashedPassword,
+        isActive: false
+    }).save();
+
+    if (!orgUniqueCode && accountRole === "SC") {
+        await new SocietyInfo({
+            orgUniqueCode: generatedOrgUniqueCode,
+            firstName,
+            lastName,
+            societyAddress
+        }).save();
+    }
+
+    return res.status(200).json({
+        isSuccess: true,
+        msg: 'Success'
+    });
+});
+
+const getSocietyInfo = asyncWrapper(async (req, res, next) => {
+    if (req.body.orgUniqueCode) {
+        const existUniqueData = await SocietyInfo.findOne({ orgUniqueCode: req.body.orgUniqueCode });
+        if (!existUniqueData) {
+            return next(createCustomError("Invalid unique code", 400));
+        }
+        else {
+            return res.status(200).json({
+                isSuccess: true,
+                msg: 'Success',
+                data: existUniqueData
+            })
+        }
+    }
+    return next(createCustomError("Society unique code is required", 400));
+});
 
 module.exports = {
     sendOtp,
     verifyOtp,
-    createAccount
+    createAccount,
+    getSocietyInfo
 };

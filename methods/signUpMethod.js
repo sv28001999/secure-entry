@@ -62,11 +62,7 @@ async function generateUniqueCode(string1, string2, string3) {
     const random = Math.random().toString(36).substr(2, 5); // Generate a random base36 string
 
     // Concatenate the three strings and append timestamp and random string
-    const uniqueCode = string1.substr(0, 2) +
-        string2.substr(0, 3) +
-        string3.substr(0, 3) +
-        timestamp +
-        random;
+    const uniqueCode = `${string1.slice(0, 2)}${string2.slice(0, 3)}${string3.slice(0, 3)}${timestamp}${random}`;
 
     return uniqueCode.toUpperCase(); // Convert the code to uppercase for consistency
 }

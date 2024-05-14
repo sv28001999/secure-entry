@@ -5,6 +5,7 @@ const AccountInfo = require('../models/AccountInfo');
 const asyncWrapper = require('../middlewares/asyncWrapper');
 const { createCustomError } = require('../error/customApiError');
 const { generateOtpAndMail, otpValidity, compareHash, generateUniqueCode, encryptPass } = require('../methods/signUpMethod');
+const VerifyOTP = require('../models/VerifyOTP');
 require('dotenv').config()
 
 const sendOtp = asyncWrapper(async (req, res, next) => {
@@ -59,7 +60,7 @@ const sendOtp = asyncWrapper(async (req, res, next) => {
 
 const verifyOtp = asyncWrapper(async (req, res, next) => {
     try {
-        const { email, otp } = req.body;
+        const { email, otp, changePasswordFlag } = req.body;
 
         if (!email) {
             return next(createCustomError("Email is required", 400));
@@ -81,7 +82,7 @@ const verifyOtp = asyncWrapper(async (req, res, next) => {
         // Verify OTP
         const isValidOtp = await compareHash(otp, existingOtpRecord.otp);
 
-        if (isValidOtp) {
+        if (isValidOtp && !changePasswordFlag) {
             await AccountInfo.findOneAndUpdate(
                 { email: email },
                 {
@@ -96,7 +97,19 @@ const verifyOtp = asyncWrapper(async (req, res, next) => {
                 },
                 { upsert: true, new: true }
             );
-            return res.json({ isSuccess: true, msg: 'OTP verification successful' });
+            return res.status(200).json({ isSuccess: true, msg: 'OTP verification successful' });
+        }
+        else if (isValidOtp && changePasswordFlag) {
+            const changePassDate = Date.now() + 5 * 60 * 1000;
+            await VerifyOTP.findOneAndUpdate(
+                { email: email },
+                {
+                    updatePasswordTill: changePassDate,
+                    isValidated: true
+                },
+                { upsert: true, new: true }
+            )
+            return res.status(200).json({ isSuccess: true, msg: 'OTP verification successful' });
         } else {
             return res.json({ isSuccess: false, msg: 'Invalid OTP' });
         }

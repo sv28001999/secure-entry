@@ -14,9 +14,17 @@ const otpValidationSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Otp retry time is required']
     },
+    updatePasswordTill: {
+        type: String,
+        default: Date.now * 60 * 1000
+    },
     email: {
         type: String,
         required: [true, 'Email Validation Failed..']
+    },
+    isValidated: {
+        type: Boolean,
+        default: false
     }
 });
 

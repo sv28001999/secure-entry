@@ -5,13 +5,9 @@ const SocietyInfo = new mongoose.Schema({
         type: String,
         required: [true, "Society unique code is required"]
     },
-    firstName: {
+    fullName: {
         type: String,
-        required: [true, 'First Name is required']
-    },
-    lastName: {
-        type: String,
-        required: [true, 'Last Name is required']
+        required: [true, 'Full Name is required']
     },
     societyAddress: {
         state: String,

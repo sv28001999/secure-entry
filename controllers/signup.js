@@ -120,7 +120,7 @@ const verifyOtp = asyncWrapper(async (req, res, next) => {
 });
 
 const createAccount = asyncWrapper(async (req, res, next) => {
-    const { email, username, orgUniqueCode, accountRole, societyAddress, firstName, lastName, mobileNumber, password } = req.body;
+    const { email, username, orgUniqueCode, accountRole, societyAddress, fullName, mobileNumber, password } = req.body;
 
     // Check if email or username already exists
     const existingAccount = await AccountInfo.findOne({ $or: [{ email }, { username }] });
@@ -147,8 +147,7 @@ const createAccount = asyncWrapper(async (req, res, next) => {
 
     // Create new user account
     const newUser = new AccountInfo({
-        firstName,
-        lastName,
+        fullName,
         email,
         username,
         accountRole,
@@ -170,15 +169,22 @@ const createAccount = asyncWrapper(async (req, res, next) => {
     if (!orgUniqueCode && accountRole === "SC") {
         await new SocietyInfo({
             orgUniqueCode: generatedOrgUniqueCode,
-            firstName,
-            lastName,
+            fullName: fullName,
             societyAddress
         }).save();
     }
 
     return res.status(200).json({
         isSuccess: true,
-        msg: 'Success'
+        msg: 'Success',
+        data: {
+            fullName: fullName,
+            email: email,
+            username: username,
+            mobileNumber: mobileNumber,
+            societyAddress: societyAddress,
+            orgUniqueCode: generatedOrgUniqueCode
+        }
     });
 });
 
@@ -192,7 +198,10 @@ const getSocietyInfo = asyncWrapper(async (req, res, next) => {
             return res.status(200).json({
                 isSuccess: true,
                 msg: 'Success',
-                data: existUniqueData
+                data: {
+                    fullName: existUniqueData.fullName,
+                    societyAddress: existUniqueData.societyAddress
+                }
             })
         }
     }

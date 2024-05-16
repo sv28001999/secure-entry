@@ -50,6 +50,13 @@ const updatePassword = asyncWrapper(async (req, res, next) => {
             },
             { upsert: true, new: true }
         );
+        await VerifyOTP.findOneAndUpdate(
+            { email: email },
+            {
+                updatePasswordTill: Date.now()
+            },
+            { upsert: true, new: true }
+        )
         return res.status(200).json({ isSuccess: true, msg: "Success" });
     }
     else {

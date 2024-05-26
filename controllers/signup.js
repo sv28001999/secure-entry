@@ -184,7 +184,8 @@ const createAccount = asyncWrapper(async (req, res, next) => {
             username: username,
             mobileNumber: mobileNumber,
             societyAddress: societyAddress,
-            orgUniqueCode: generatedOrgUniqueCode
+            orgUniqueCode: generatedOrgUniqueCode,
+            roleType: accountRole
         }
     });
 });

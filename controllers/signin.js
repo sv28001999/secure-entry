@@ -1,4 +1,6 @@
 const Accounts = require('../models/Accounts');
+const Token = require('../models/Token');
+const jwt = require('jsonwebtoken');
 const asyncWrapper = require('../middlewares/asyncWrapper');
 const { createCustomError } = require('../error/customApiError');
 const { compareHash, encryptPass } = require('../methods/signUpMethod');
@@ -15,6 +17,30 @@ const login = asyncWrapper(async (req, res, next) => {
     const isAuthenticate = await compareHash(password, existUsername.password);
 
     if (isAuthenticate) {
+        // Generate JWT token
+        const token = jwt.sign(
+            {
+                email: existUsername.email,
+                username: existUsername.username,
+                roleType: existUsername.roleType,
+                isActive: existUsername.isActive
+            },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: '30d' }
+        );
+
+        // Save token in database
+        // const newToken = new Token({ userId: existUsername._id, token });
+        // await newToken.save();
+
+        await Token.findOneAndUpdate(
+            { userId: existUsername._id },
+            {
+                token:token
+            },
+            { upsert: true, new: true }
+        );
+
         return res.status(200).json({
             isSuccess: true,
             msg: 'Success',
@@ -22,7 +48,8 @@ const login = asyncWrapper(async (req, res, next) => {
                 email: existUsername.email,
                 username: existUsername.username,
                 roleType: existUsername.roleType,
-                isActive: existUsername.isActive
+                isActive: existUsername.isActive,
+                token: token
             }
         });
     }

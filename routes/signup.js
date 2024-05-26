@@ -11,6 +11,7 @@ const {
     login,
     updatePassword
 } = require('../controllers/signin');
+const verifyToken = require('../middlewares/verifyToken');
 
 router.route('/sendOtp').post(sendOtp);
 router.route('/verifyOtp').post(verifyOtp);

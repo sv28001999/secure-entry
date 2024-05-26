@@ -15,6 +15,14 @@ const Accounts = new mongoose.Schema({
         type: String,
         required: [true, 'Password must be required']
     },
+    roleType: {
+        type: String,
+        require: [true, 'Role must be required'],
+        enum: {
+            values: ['SC', 'SM', 'SG'],
+            message: 'Invalid account role'
+        },
+    },
     isActive: {
         type: Boolean
     }

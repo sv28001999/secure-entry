@@ -21,6 +21,7 @@ const login = asyncWrapper(async (req, res, next) => {
             data: {
                 email: existUsername.email,
                 username: existUsername.username,
+                roleType: existUsername.roleType,
                 isActive: existUsername.isActive
             }
         });

@@ -163,6 +163,7 @@ const createAccount = asyncWrapper(async (req, res, next) => {
         email: email,
         username: username,
         password: hashedPassword,
+        roleType: accountRole,
         isActive: false
     }).save();
 

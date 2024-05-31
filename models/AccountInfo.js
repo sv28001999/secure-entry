@@ -38,10 +38,6 @@ const AccountInfo = new mongoose.Schema({
         type: String,
         required: [true, 'Mobile number is required']
     },
-    password: {
-        type: String,
-        required: [true, 'Password is required']
-    },
     isActive: {
         type: Boolean,
         default: false
@@ -49,6 +45,10 @@ const AccountInfo = new mongoose.Schema({
     orgUniqueCode: {
         type: String,
         required: [true, "Society unique code is required"]
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
     }
 });
 

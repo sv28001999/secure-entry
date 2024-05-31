@@ -5,6 +5,7 @@ const asyncWrapper = require('../middlewares/asyncWrapper');
 const { createCustomError } = require('../error/customApiError');
 const { compareHash, encryptPass } = require('../methods/signUpMethod');
 const VerifyOTP = require('../models/VerifyOTP');
+const AccountInfo = require('../models/AccountInfo');
 require('dotenv').config();
 
 const login = asyncWrapper(async (req, res, next) => {
@@ -36,7 +37,7 @@ const login = asyncWrapper(async (req, res, next) => {
         await Token.findOneAndUpdate(
             { userId: existUsername._id },
             {
-                token:token
+                token: token
             },
             { upsert: true, new: true }
         );
@@ -92,7 +93,107 @@ const updatePassword = asyncWrapper(async (req, res, next) => {
     }
 });
 
+const getMemberList = asyncWrapper(async (req, res, next) => {
+    const { orgUniqueCode, accountRole } = req.body;
+
+    if (!orgUniqueCode) {
+        return next(createCustomError("Please provide society unique code", 400));
+    }
+
+    const isUniqueCodeExist = await SocietyInfo.findOne({ orgUniqueCode });
+    if (!isUniqueCodeExist) {
+        return next(createCustomError("Unauthorized society", 400));
+    }
+
+    try {
+        let query = { orgUniqueCode };
+        if (accountRole) {
+            query.roleType = accountRole;
+        }
+
+        const members = await AccountInfo.find(query);
+
+        return res.status(200).json({
+            isSuccess: true,
+            data: members
+        });
+    } catch (error) {
+        return next(createCustomError("Error fetching member list", 500));
+    }
+});
+
+const getMemberVerifyStatus = asyncWrapper(async (req, res, next) => {
+    const { orgUniqueCode, memberId } = req.body;
+
+    // Validate required input
+    if (!orgUniqueCode || !memberId) {
+        return next(createCustomError("Please provide all the required details", 400));
+    }
+
+    // Check if the organization exists
+    const isUniqueCodeExist = await SocietyInfo.findOne({ orgUniqueCode });
+    if (!isUniqueCodeExist) {
+        return next(createCustomError("Unauthorized society", 400));
+    }
+
+    try {
+        // Find the member by orgUniqueCode and memberId
+        const member = await AccountInfo.findOne({ _id: memberId, orgUniqueCode });
+
+        if (!member) {
+            return next(createCustomError("Member not found or unauthorized action", 404));
+        }
+
+        // Respond with the member's verification status
+        return res.status(200).json({
+            isSuccess: true,
+            data: {
+                memberId: member._id,
+                isVerified: member.isVerified
+            }
+        });
+    } catch (error) {
+        return next(createCustomError("Error fetching member verification status", 500));
+    }
+});
+
+const verifyMember = asyncWrapper(async (req, res, next) => {
+    const { orgUniqueCode, memberId } = req.body;
+
+    if (!orgUniqueCode || !memberId) {
+        return next(createCustomError("Please provide all the required details", 400));
+    }
+
+    const isUniqueCodeExist = await SocietyInfo.findOne({ orgUniqueCode });
+    if (!isUniqueCodeExist) {
+        return next(createCustomError("Unauthorized society", 400));
+    }
+
+    try {
+        const member = await AccountInfo.findOneAndUpdate(
+            { _id: memberId, orgUniqueCode },
+            { isVerified: true },
+            { new: true }
+        );
+
+        if (!member) {
+            return next(createCustomError("Member not found or unauthorized action", 404));
+        }
+
+        return res.status(200).json({
+            isSuccess: true,
+            message: 'Member verified successfully',
+            data: member
+        });
+    } catch (error) {
+        return next(createCustomError("Error verifying member", 500));
+    }
+});
+
 module.exports = {
     login,
-    updatePassword
+    updatePassword,
+    getMemberList,
+    verifyMember,
+    getMemberVerifyStatus
 }

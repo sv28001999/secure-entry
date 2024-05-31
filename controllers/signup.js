@@ -121,6 +121,7 @@ const verifyOtp = asyncWrapper(async (req, res, next) => {
 
 const createAccount = asyncWrapper(async (req, res, next) => {
     const { email, username, orgUniqueCode, accountRole, societyAddress, fullName, mobileNumber, password } = req.body;
+    let isVerified = true;
 
     // Check if email or username already exists
     const existingAccount = await AccountInfo.findOne({ $or: [{ email }, { username }] });
@@ -139,6 +140,7 @@ const createAccount = asyncWrapper(async (req, res, next) => {
         if (!isUniqueCodeExists) {
             return next(createCustomError("Invalid unique code", 400));
         }
+        isVerified = false;
     }
 
     // Generate organization unique code if not provided
@@ -154,7 +156,8 @@ const createAccount = asyncWrapper(async (req, res, next) => {
         societyAddress,
         mobileNumber,
         password: hashedPassword,
-        orgUniqueCode: generatedOrgUniqueCode
+        orgUniqueCode: generatedOrgUniqueCode,
+        isVerified: isVerified
     });
 
     await newUser.save();

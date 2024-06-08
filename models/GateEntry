@@ -9,6 +9,10 @@ const GateEntrySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    memberRoomNo: {
+        type: String,
+        required: true
+    },
     work: {
         type: String,
         required: true

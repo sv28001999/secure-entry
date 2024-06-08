@@ -11,6 +11,10 @@ const Accounts = new mongoose.Schema({
         trim: true,
         required: [true, 'Username must be required']
     },
+
+    orgUniqueCode: {
+        type: String
+    },
     password: {
         type: String,
         required: [true, 'Password must be required']

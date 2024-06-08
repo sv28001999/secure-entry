@@ -50,6 +50,7 @@ const login = asyncWrapper(async (req, res, next) => {
                 username: existUsername.username,
                 roleType: existUsername.roleType,
                 isActive: existUsername.isActive,
+                orgUniqueCode: existUsername.orgUniqueCode,
                 token: token
             }
         });

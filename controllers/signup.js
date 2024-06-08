@@ -167,6 +167,7 @@ const createAccount = asyncWrapper(async (req, res, next) => {
         username: username,
         password: hashedPassword,
         roleType: accountRole,
+        orgUniqueCode: generatedOrgUniqueCode,
         isActive: false
     }).save();
 

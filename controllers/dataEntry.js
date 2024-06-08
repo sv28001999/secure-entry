@@ -4,11 +4,11 @@ const GateEntry = require('../models/GateEntry');
 const SocietyInfo = require('../models/SocietyInfo');
 
 const uploadEntry = asyncWrapper(async (req, res, next) => {
-    const { personName, mobileNumber, work, place, imageUrl, orgUniqueCode } = req.body;
+    const { personName, mobileNumber, work, place, imageUrl, memberRoomNo, orgUniqueCode } = req.body;
     const isUniqueCodeExist = await SocietyInfo.findOne({ orgUniqueCode });
     const isUserEntered = await GateEntry.findOne({ mobileNumber, orgUniqueCode });
 
-    if (!personName || !mobileNumber || !work || !place || !imageUrl || !orgUniqueCode) {
+    if (!personName || !mobileNumber || !work || !place || !imageUrl || !memberRoomNo || !orgUniqueCode) {
         return next(createCustomError("Please provide all the details", 400));
     }
 
@@ -16,7 +16,6 @@ const uploadEntry = asyncWrapper(async (req, res, next) => {
         return next(createCustomError("Unauthorized society", 400));
     }
 
-    console.log(isUserEntered && isUserEntered.isEntered);
     if (isUserEntered && isUserEntered.isEntered) {
         return res.status(200).json({ isSuccess: false, msg: "Person is already entered on society or not done the swipe out" });
     }
@@ -27,7 +26,8 @@ const uploadEntry = asyncWrapper(async (req, res, next) => {
         work,
         place,
         imageUrl,
-        orgUniqueCode
+        orgUniqueCode,
+        memberRoomNo
     });
 
     const enterDetails = await newEntry.save();

@@ -1,0 +1,84 @@
+/* Reset some basic styles */
+body, h1, h2, h3, p, ul {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    line-height: 1.6;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+    padding-top: 20px;
+}
+
+/* Main section styles */
+main .policy {
+    margin-top: 30px;
+}
+
+main .policy h1 {
+    color: #000000;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+main .policy h2 {
+    color: #000000;
+    font-size: 18px;
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+
+main .policy h3 {
+    color: #000000;
+    font-size: 16px;
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+
+main .policy p {
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+main .policy ul {
+    list-style: disc;
+    margin-left: 20px;
+}
+
+main .policy ul li {
+    margin-bottom: 10px;
+}
+
+.notice a {
+    color: #6b82fc;
+    text-decoration: none;
+}
+
+.notice a:hover {
+    text-decoration: underline;
+}
+
+.notice {
+    margin-bottom: 30px;
+}
+
+/* Footer styles */
+footer {
+    background: #f4f4f4;
+    color: #333333;
+    text-align: center;
+    padding: 10px 0;
+    margin-top: 20px;
+}
+
+footer p {
+    margin: 0;
+}

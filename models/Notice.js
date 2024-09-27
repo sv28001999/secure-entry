@@ -5,11 +5,15 @@ const NoticeSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    noticeDate: {
+    noticeCreatedDate: {
         type: Date,
         default: Date.now
     },
-    image: {
+    noticeDate: {
+        type: Date,
+        required: true
+    },
+    noticeImgUrl: {
         type: String
     },
     noticeContent: {

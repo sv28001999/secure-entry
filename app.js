@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const router = require('./routes/signup');
+const authRoute = require('./routes/signup');
 const connect = require('./db/connectDB');
 const notFound = require('./middlewares/errorPage');
 const handleError = require('./middlewares/handleError');
@@ -20,7 +20,7 @@ const startServer = async () => {
 app.use(express.static('public'));
 app.use(express.json());
 
-app.use('/api/v1', router);
+app.use('/api/v1', authRoute);
 
 app.use(handleError);
 app.use(notFound);

@@ -4,10 +4,10 @@ const { createCustomError } = require('../error/customApiError');
 const SocietyInfo = require('../models/SocietyInfo');
 
 const addNotice = asyncWrapper(async (req, res, next) => {
-    const { noticeTitle, noticeDate, image, noticeContent, orgUniqueCode } = req.body;
+    const { noticeTitle, noticeDate, noticeImgUrl, noticeContent, orgUniqueCode } = req.body;
 
     // Validate required input
-    if (!noticeTitle || !noticeDate || !noticeContent || !orgUniqueCode) {
+    if (!noticeTitle || !noticeDate || !orgUniqueCode || !(noticeContent || noticeImgUrl)) {
         return next(createCustomError("Please provide all the required details", 400));
     }
 
@@ -20,9 +20,10 @@ const addNotice = asyncWrapper(async (req, res, next) => {
     // Create a new notice
     const newNotice = new Notice({
         noticeTitle,
-        image,
+        noticeImgUrl,
         noticeContent,
-        orgUniqueCode
+        orgUniqueCode,
+        noticeDate
     });
 
     // Save the new notice to the database
@@ -46,12 +47,12 @@ const getNotice = asyncWrapper(async (req, res, next) => {
     let query = { orgUniqueCode };
 
     if (fromDate || toDate) {
-        query.noticeDate = {};
+        query.noticeCreatedDate = {};
         if (fromDate) {
-            query.noticeDate.$gte = new Date(fromDate);
+            query.noticeCreatedDate.$gte = new Date(fromDate);
         }
         if (toDate) {
-            query.noticeDate.$lte = new Date(toDate);
+            query.noticeCreatedDate.$lte = new Date(toDate);
         }
     }
 

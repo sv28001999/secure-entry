@@ -4,10 +4,10 @@ const { createCustomError } = require('../error/customApiError');
 const SocietyInfo = require('../models/SocietyInfo');
 
 const addEvent = asyncWrapper(async (req, res, next) => {
-    const { eventTitle, eventDate, eventContent, orgUniqueCode } = req.body;
+    const { eventTitle, eventStartDate, eventEndDate, eventContent, orgUniqueCode } = req.body;
 
     // Validate required input
-    if (!eventTitle || !eventDate || !eventContent || !orgUniqueCode) {
+    if (!eventTitle || !eventStartDate || !eventEndDate || !eventContent || !orgUniqueCode) {
         return next(createCustomError("Please provide all the required details", 400));
     }
 
@@ -18,9 +18,10 @@ const addEvent = asyncWrapper(async (req, res, next) => {
     }
 
     // Create a new event
-    const newEvent = new Event({
+    const newEvent = new Events({
         eventTitle,
-        eventDate: new Date(eventDate),
+        eventStartDate,
+        eventEndDate,
         eventContent,
         orgUniqueCode
     });
@@ -69,24 +70,24 @@ const getEvent = asyncWrapper(async (req, res, next) => {
     let query = { orgUniqueCode };
 
     if (fromDate || toDate) {
-        query.eventDate = {};
+        query.eventCreatedDate = {};
         if (fromDate) {
-            query.eventDate.$gte = new Date(fromDate);
+            query.eventCreatedDate.$gte = new Date(fromDate);
         }
         if (toDate) {
-            query.eventDate.$lte = new Date(toDate);
+            query.eventCreatedDate.$lte = new Date(toDate);
         }
     }
 
     try {
         // Execute the query with pagination
-        const events = await Event.find(query)
-            .sort({ eventDate: -1 }) // Sorting by eventDate in descending order
+        const events = await Events.find(query)
+            .sort({ eventCreatedDate: -1 }) // Sorting by eventDate in descending order
             .skip(skip)
             .limit(limit);
 
         // Count the total number of records matching the query
-        const totalEvents = await Event.countDocuments(query);
+        const totalEvents = await Events.countDocuments(query);
 
         // Respond with the results
         return res.status(200).json({

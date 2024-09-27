@@ -19,7 +19,7 @@ const {
     addNotice,
     getNotice,
     deleteNotice
-} = require('../controllers/addSocietyNotice');
+} = require('../controllers/notice');
 
 const {
     addEvent,

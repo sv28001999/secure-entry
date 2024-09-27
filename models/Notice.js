@@ -9,10 +9,6 @@ const NoticeSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    noticeDate: {
-        type: Date,
-        required: true
-    },
     noticeImgUrl: {
         type: String
     },
